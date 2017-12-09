@@ -15,6 +15,36 @@
 			background-color: @bodyBackground;
 			color: @textColor;
 		}
+		
+		a {
+            color: @linkColor;
+        }
+
+        a:hover {
+            color: lighten(@linkColor, 20)
+        }
+		
+		.octoprint-container .tab-content h1 {
+            color: @white;
+        }
+
+        .octoprint-container .tab-content {
+            border: none;
+        }
+		
+		.octoprint-container .accordion-heading .accordion-heading-button a {
+            color: inherit;
+        }
+		
+		.octoprint-container .accordion-heading [class*=" icon-"] {
+            color: @grayLighter;
+            &:hover {
+                color: @white;
+            }
+            &.disabled {
+                color: darken(@grayLighter,5);
+            }
+        }
 
 		h1 small, h2 small, h3 small, h4 small, h5 small, h6 small, h6 {
 			font-family: @headingsFontFamily;
