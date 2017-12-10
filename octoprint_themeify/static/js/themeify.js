@@ -177,6 +177,7 @@ $(function() {
                     .addClass(newVal)
                     .removeClass(prev);
             }
+			console.log("<link rel='stylesheet' href='"+window.location.pathname.replace(/\/$/, '')+"/plugin/themeify/static/themes/"+self.ownSettings.theme()+".css' type='text/css'>");
 			$("head").append("<link rel='stylesheet' href='"+window.location.pathname.replace(/\/$/, '')+"/plugin/themeify/static/themes/"+self.ownSettings.theme()+".css' type='text/css'>");
             self._copyOwnSettings();
         };
