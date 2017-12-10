@@ -34,7 +34,6 @@ $(function() {
             if (htmlId && htmlId == "touch") {
                 $("html").removeClass(self.classId);
             }
-			$("head").append("<link rel='stylesheet' href='"+window.location.pathname.replace(/\/$/, '')+"/plugin/themeify/static/themes/"+self.ownSettings.theme()+".css' type='text/css'>");
             self.updateColors();
             self._updateCustomRules();
         };
@@ -45,8 +44,7 @@ $(function() {
                 $.attr("html", "class") != self.classId &&
                 $("html").attr("id") !== "touch"
             ) {
-				$("head").append("<link rel='stylesheet' href='"+window.location.pathname.replace(/\/$/, '')+"/plugin/themeify/static/themes/"+self.ownSettings.theme()+".css' type='text/css'>");
-                $("html")
+				$("html")
                     .addClass(self.classId)
                     .addClass(self.ownSettings.theme());
             }
@@ -179,7 +177,7 @@ $(function() {
                     .addClass(newVal)
                     .removeClass(prev);
             }
-
+			$("head").append("<link rel='stylesheet' href='"+window.location.pathname.replace(/\/$/, '')+"/plugin/themeify/static/themes/"+self.ownSettings.theme()+".css' type='text/css'>");
             self._copyOwnSettings();
         };
 
