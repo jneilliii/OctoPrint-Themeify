@@ -34,7 +34,7 @@ $(function() {
             if (htmlId && htmlId == "touch") {
                 $("html").removeClass(self.classId);
             }
-
+			$("head").append("<link rel='stylesheet' href='"+window.location.pathname.replace(/\/$/, '')+"/plugin/themeify/static/css/"+self.ownSettings.theme()+"' type='text/css'>");
             self.updateColors();
             self._updateCustomRules();
         };
