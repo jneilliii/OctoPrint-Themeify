@@ -8,7 +8,7 @@
 $(function() {
     function ThemeifyViewModel(parameters) {
         var self = this;
-        self.classId = "themeify";
+        self.classId = 'themeify';
         self.settings = parameters[0];
 
         self.ownSettings = {};
@@ -20,32 +20,75 @@ $(function() {
         self._ownSettingsPrev = {};
         //holds subscriptions, so that they can be removed later
         self.configSubscriptions = {
-            enabled: "",
-            theme: ""
+            enabled: '',
+            theme: '',
         };
-
+        self.tabIcons = {};
+        self.oldTabContent = {};
         var oldVal = function(key) {
             return self._ownSettingsPrev[key];
         };
 
         self.onStartupComplete = function() {
-            var htmlId = $("html").attr("id");
+            var htmlId = $('html').attr('id');
             //Remove styling if touch is enabled
-            if (htmlId && htmlId == "touch") {
-                $("html").removeClass(self.classId);
+            if (htmlId && htmlId == 'touch') {
+                $('html').removeClass(self.classId);
             }
 
             self.updateColors();
             self._updateCustomRules();
         };
 
+        self.setupIcons = function() {
+            self.tabIcons
+                .tabs()
+                .filter(tab => tab.domId() && tab.enabled())
+                .map((tab, i) => {
+                    const { domId, enabled, faIcon } = tab;
+                    const icon = $('<i>', { class: faIcon() });
+                    const elem$ = $('${domId()} a');
+                    if (elem$ && elem$.closest('ul').attr('id') === 'tabs') {
+                        self.oldTabContent[domId()] = $('${domId()} a').html();
+                        elem$.html(icon);
+                    } else {
+                        console.warn(
+                            'Themeify: Failed to add icon! ${domId()} is not a child of the tab-list!'
+                        );
+                    }
+                });
+        };
+
+        self.restoreTabs = function() {
+            self.tabIcons
+                .tabs()
+                .filter(tab => tab.domId())
+                .map((tab, i) => {
+                    const { domId, enabled, faIcon } = tab;
+                    const oldContent = self.oldTabContent[domId()];
+                    if (oldContent) {
+                        $('${domId()} a').html(oldContent);
+                    }
+                });
+        };
+
+        self.enableBeforeLoaded = function() {
+            const localTheme = localStorage.getItem('theme');
+            if (localTheme) {
+                $('html')
+                    .addClass(self.classId)
+                    .addClass(localTheme);
+            }
+        };
+
         self.enable = function() {
             if (
                 self.ownSettings.enabled() &&
-                $.attr("html", "class") != self.classId &&
-                $("html").attr("id") !== "touch"
+                $('html').attr('id') !== 'touch'
             ) {
-                $("html")
+                const theme = self.ownSettings.theme();
+                localStorage.setItem('theme', theme);
+                $('html')
                     .addClass(self.classId)
                     .addClass(self.ownSettings.theme());
             }
@@ -53,22 +96,41 @@ $(function() {
 
         self.addNewCustomRule = function() {
             var ruleObj = {
-                selector: ko.observable(""),
-                rule: ko.observable(""),
-                value: ko.observable(""),
-                enabled: ko.observable(true)
+                selector: ko.observable(''),
+                rule: ko.observable(''),
+                value: ko.observable(''),
+                enabled: ko.observable(true),
             };
-            self._subscribeToCustomRules(ruleObj, "customRules");
+            self._subscribeToDictValues(ruleObj, 'customRules');
             self.ownSettings.customRules.push(ruleObj);
+        };
+
+        self.addNewIcon = function() {
+            var icon = {
+                domId: ko.observable(''),
+                enabled: ko.observable(true),
+                faIcon: ko.observable(''),
+            };
+            self._subscribeToDictValues(icon, 'tabs');
+            self.tabIcons.tabs.push(icon);
         };
 
         self.onBeforeBinding = function() {
             self.settings = self.settings.settings;
             self.ownSettings = self.settings.plugins.themeify;
             self.customRules = self.ownSettings.customRules.extend({
-                rateLimit: 50
+                rateLimit: 50,
             });
             self.onRuleToggle = self.onRuleToggle;
+            self.tabIcons = {
+                enabled: self.ownSettings.tabs.enableIcons,
+                tabs: self.ownSettings.tabs.icons,
+            };
+
+            if (self.tabIcons.enabled()) {
+                self.setupIcons();
+            }
+
             self.enable();
 
             self._copyOwnSettings();
@@ -106,13 +168,13 @@ $(function() {
                 self.builtInElements.push({
                     elem: elem,
                     rule: rule.rule(),
-                    old
+                    old,
                 });
             } else {
                 self.customizedElements.push({
                     elem: elem,
                     rule: rule.rule(),
-                    old
+                    old,
                 });
             }
             $(rule.selector()).css(rule.rule(), rule.value());
@@ -120,14 +182,14 @@ $(function() {
 
         self.clone = function(obj) {
             //get observable value
-            if (typeof obj == "function") {
+            if (typeof obj == 'function') {
                 return obj();
             }
 
             if (
                 obj === null ||
-                typeof obj !== "object" ||
-                "isActiveClone" in obj
+                typeof obj !== 'object' ||
+                'isActiveClone' in obj
             )
                 return obj;
 
@@ -136,9 +198,9 @@ $(function() {
 
             for (var key in obj) {
                 if (Object.prototype.hasOwnProperty.call(obj, key)) {
-                    obj["isActiveClone"] = null;
+                    obj['isActiveClone'] = null;
                     temp[key] = self.clone(obj[key]);
-                    delete obj["isActiveClone"];
+                    delete obj['isActiveClone'];
                 }
             }
 
@@ -169,12 +231,13 @@ $(function() {
         };
 
         self.onThemeChange = function(newVal) {
-            var prev = oldVal("theme");
+            var prev = oldVal('theme');
             var hasClass = clazz => {
-                return $("html").hasClass(clazz);
+                return $('html').hasClass(clazz);
             };
             if (!hasClass(newVal)) {
-                $("html")
+                localStorage.setItem('theme', newVal);
+                $('html')
                     .addClass(newVal)
                     .removeClass(prev);
             }
@@ -183,14 +246,15 @@ $(function() {
         };
 
         self.onEnabledChange = function(newVal) {
-            if (
-                newVal &&
-                $.attr("html", "class") != self.classId &&
-                $("html").attr("id") !== "touch"
-            ) {
-                $("html").addClass(self.classId);
+            if (newVal && $('html').attr('id') !== 'touch') {
+                const theme = self.ownSettings.theme();
+                $('html')
+                    .addClass(self.classId)
+                    .addClass(theme);
+                localStorage.setItem('theme', theme);
             } else {
-                $("html").removeClass(self.classId);
+                $('html').removeClass(self.classId);
+                localStorage.setItem('theme', false);
                 self._removeCustomStyles();
             }
 
@@ -212,16 +276,33 @@ $(function() {
             self._copyOwnSettings();
         };
 
+        self.onIconsEnableChange = function(newVal) {
+            if (newVal) {
+                self.setupIcons();
+            } else {
+                self.restoreTabs();
+            }
+        };
+
+        self.onIconChange = function(icon, value, propKey) {
+            if (!self.tabIcons.enabled()) return;
+
+            if (propKey === 'enabled' && !value) {
+                self.restoreTabs();
+            }
+            self.setupIcons();
+        };
+
         self._removeCustomStyles = function() {
-            self.customizedElements.map(elem => elem.elem.css(elem.rule, ""));
+            self.customizedElements.map(elem => elem.elem.css(elem.rule, ''));
         };
 
         self._removeBuiltInStyles = function() {
-            self.builtInElements.map(elem => elem.elem.css(elem.rule, ""));
+            self.builtInElements.map(elem => elem.elem.css(elem.rule, ''));
         };
 
         self._removeCustomStylesByRule = function(rule) {
-            $(rule.selector()).css(rule.rule(), "");
+            $(rule.selector()).css(rule.rule(), '');
         };
 
         self.onRuleToggle = function(rule) {
@@ -231,7 +312,7 @@ $(function() {
 
         self.ruleIsDeleteable = function(rule) {
             //deleteable if not exists
-            if (!rule.deletable || typeof rule.deletable !== "function") {
+            if (!rule.deletable || typeof rule.deletable !== 'function') {
                 return true;
             }
             return rule.deletable();
@@ -244,34 +325,52 @@ $(function() {
             }
         };
 
-        self._subscribeToCustomRules = function(rule, key, subscribeFunc) {
+        self.onIconDelete = function(icon) {
+            self.restoreTabs();
+            self.tabIcons.tabs.remove(icon);
+            self.setupIcons();
+        };
+
+        self._subscribeToDictValues = function(dict, key, subscribeFunc) {
             var subFunc = subscribeFunc
-                ? subscribeFunc.bind(this, rule)
-                : self.onCustomRuleChange.bind(this, rule);
-            Object.keys(rule).map(ruleAttr => {
+                ? subscribeFunc.bind(this, dict)
+                : self.onCustomRuleChange.bind(this, dict);
+            Object.keys(dict).map(dictAttr => {
                 self.configSubscriptions[key].push(
-                    rule[ruleAttr].subscribe(subFunc)
+                    dict[dictAttr].subscribe(val => subFunc(val, dictAttr))
                 );
             });
         };
         self.onSettingsShown = function() {
             //subscribe to changes
             Object.keys(self.ownSettings).map((key, i) => {
-                if (key == "customRules") {
+                if (key == 'customRules') {
                     self.configSubscriptions[key] = [];
                     self.customRules().map((rule, i) => {
                         //subscribe to the attributes (selector, rule, value, enabled etc)
-                        self._subscribeToCustomRules(rule, key);
+                        self._subscribeToDictValues(rule, key);
                     });
-                } else if (key == "color") {
+                } else if (key == 'color') {
                     self.configSubscriptions[key] = [];
                     var subFunc = self.onColorChange;
                     //Loop rules
                     self.ownSettings.color().map((rule, i) => {
                         //subscribe to the attributes (selector, rule, value, enabled etc)
-                        self._subscribeToCustomRules(rule, key, subFunc);
+                        self._subscribeToDictValues(rule, key, subFunc);
+                    });
+                } else if (key == 'tabs') {
+                    const sub = (self.configSubscriptions[key] = []);
+                    const { enabled, tabs } = self.tabIcons;
+                    sub.push(enabled.subscribe(self.onIconsEnableChange));
+                    tabs().map((tab, i) => {
+                        self._subscribeToDictValues(
+                            tab,
+                            key,
+                            self.onIconChange
+                        );
                     });
                 } else {
+                    //Use the map for simple subscriptions
                     var onChangeFunc = self.configOnChangeMap[key]
                         ? self.configOnChangeMap[key]
                         : self.onChange.bind(this, key);
@@ -294,16 +393,20 @@ $(function() {
                 }
             });
         };
+
+        //optimize "flicker" before theme is loaded
+        self.enableBeforeLoaded();
+
         self.configOnChangeMap = {
             enabled: self.onEnabledChange,
             theme: self.onThemeChange,
-            enableCustomization: self.onEnableCustomizationChange
+            enableCustomization: self.onEnableCustomizationChange,
         };
     }
 
     OCTOPRINT_VIEWMODELS.push([
         ThemeifyViewModel,
-        ["settingsViewModel"],
-        ["#settings_plugin_themeify"]
+        ['settingsViewModel'],
+        ['#settings_plugin_themeify'],
     ]);
 });

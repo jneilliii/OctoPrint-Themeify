@@ -6,15 +6,15 @@ plugin_package = "octoprint_themeify"
 
 plugin_name = "Themeify"
 
-plugin_version = "1.0.1"
+plugin_version = "1.2.0"
 
 plugin_description = """Beautiful themes for octoprint"""
 
-plugin_author = "Birk Johansson"
+plugin_author = "Outsourced Guru"
 
-plugin_author_email = "birkbjo@gmail.com"
+plugin_author_email = "support@outsourced.guru"
 
-plugin_url = "https://github.com/birkbjo/OctoPrint-Themeify"
+plugin_url = "https://github.com/OutsourcedGuru/OctoPrint-Themeify"
 
 plugin_license = "AGPLv3"
 
